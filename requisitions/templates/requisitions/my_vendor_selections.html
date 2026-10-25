@@ -1,0 +1,183 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Status Pengajuan Vendor</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+</head>
+<body class="bg-light">
+<div class="container py-5">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3">Status Pengajuan Vendor</h1>
+            <p class="text-secondary mb-0">
+                Pantau hasil pemeriksaan Procurement Manager dan kelola Purchase Order.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a
+                href="{% url 'requisitions:purchase_order_list' %}"
+                class="btn btn-primary"
+            >
+                Daftar PO
+            </a>
+
+            <a
+                href="{% url 'requisitions:procurement_pr_list' %}"
+                class="btn btn-outline-secondary"
+            >
+                Kembali
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Tutup"
+                ></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nomor PR</th>
+                        <th>Vendor</th>
+                        <th>Harga</th>
+                        <th>Status</th>
+                        <th>Komentar Manager</th>
+                        <th>Diputuskan Oleh</th>
+                        <th>Waktu Keputusan</th>
+                        <th>Purchase Order</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for selection in selections %}
+                    <tr>
+                        <td class="text-nowrap">
+                            {{ selection.purchase_request.pr_number }}
+                        </td>
+
+                        <td>
+                            {{ selection.quotation.invitation.vendor.name }}
+                        </td>
+
+                        <td class="text-nowrap">
+                            Rp {{ selection.quotation.total_price|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            {% if selection.status == "PENDING" %}
+                                <span class="badge text-bg-warning">
+                                    Menunggu Persetujuan
+                                </span>
+                            {% elif selection.status == "APPROVED" %}
+                                <span class="badge text-bg-success">
+                                    Disetujui
+                                </span>
+                            {% elif selection.status == "REVISION_REQUIRED" %}
+                                <span class="badge text-bg-info">
+                                    Perlu Revisi
+                                </span>
+                            {% elif selection.status == "REJECTED" %}
+                                <span class="badge text-bg-danger">
+                                    Ditolak
+                                </span>
+                            {% else %}
+                                <span class="badge text-bg-secondary">
+                                    {{ selection.get_status_display }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ selection.manager_comments|default:"Belum ada komentar" }}
+                        </td>
+
+                        <td>
+                            {{ selection.decided_by.username|default:"-" }}
+                        </td>
+
+                        <td class="text-nowrap">
+                            {% if selection.decided_at %}
+                                {{ selection.decided_at|date:"d M Y H:i" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td class="text-nowrap">
+                            {% if selection.status == "APPROVED" %}
+                                {% if selection.purchase_order %}
+                                    <div class="mb-1">
+                                        <span class="badge text-bg-success">
+                                            {{ selection.purchase_order.po_number }}
+                                        </span>
+                                    </div>
+
+                                    <a
+                                        href="{% url 'requisitions:purchase_order_list' %}"
+                                        class="btn btn-outline-primary btn-sm"
+                                    >
+                                        Lihat PO
+                                    </a>
+                                {% else %}
+                                    <a
+                                        href="{% url 'requisitions:purchase_order_create' selection.pk %}"
+                                        class="btn btn-primary btn-sm"
+                                    >
+                                        Buat PO
+                                    </a>
+                                {% endif %}
+                            {% elif selection.status == "PENDING" %}
+                                <span class="text-secondary small">
+                                    Menunggu persetujuan
+                                </span>
+                            {% elif selection.status == "REVISION_REQUIRED" %}
+                                <span class="text-secondary small">
+                                    Perlu revisi
+                                </span>
+                            {% elif selection.status == "REJECTED" %}
+                                <span class="text-secondary small">
+                                    Tidak dapat dibuat
+                                </span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4 text-secondary">
+                            Kamu belum memiliki pengajuan vendor.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

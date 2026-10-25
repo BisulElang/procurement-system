@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Detail Purchase Order</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+</head>
+<body class="bg-light">
+<div class="container py-5">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div class="d-flex flex-wrap gap-2">
+            <a
+                href="{% url 'requisitions:goods_receipt_po_list' %}"
+                class="btn btn-success"
+            >
+                Goods Receipt
+            </a>
+
+            <a
+                href="{% url 'requisitions:purchase_order_list' %}"
+                class="btn btn-outline-secondary"
+            >
+                Kembali ke Daftar PO
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Tutup"
+                ></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-3">
+                <div>
+                    <h2 class="h4 mb-1">{{ purchase_order.po_number }}</h2>
+                    <div class="text-secondary small">
+                        Dibuat pada
+                        {{ purchase_order.created_at|date:"d M Y H:i" }}
+                    </div>
+                </div>
+
+                <div>
+                    {% if purchase_order.status == "DRAFT" %}
+                        <span class="badge text-bg-secondary fs-6">Draft</span>
+                    {% elif purchase_order.status == "ISSUED" %}
+                        <span class="badge text-bg-success fs-6">Diterbitkan</span>
+                    {% elif purchase_order.status == "CANCELLED" %}
+                        <span class="badge text-bg-danger fs-6">Dibatalkan</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-secondary small">Nomor PR</div>
+                    <div class="fw-semibold">
+                        {{ purchase_order.vendor_selection.purchase_request.pr_number }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Judul PR</div>
+                    <div class="fw-semibold">
+                        {{ purchase_order.vendor_selection.purchase_request.title }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Vendor</div>
+                    <div class="fw-semibold">
+                        {{ purchase_order.vendor_selection.quotation.invitation.vendor.name }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Dibuat Oleh</div>
+                    <div class="fw-semibold">
+                        {{ purchase_order.created_by.username }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Tanggal PO</div>
+                    <div>
+                        {{ purchase_order.order_date|date:"d M Y" }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Estimasi Pengiriman</div>
+                    <div>
+                        {% if purchase_order.expected_delivery_date %}
+                            {{ purchase_order.expected_delivery_date|date:"d M Y" }}
+                        {% else %}
+                            Belum ditentukan
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <div class="text-secondary small">Catatan</div>
+                    <div>
+                        {{ purchase_order.notes|default:"Tidak ada catatan" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Detail Barang</h2>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nama Barang</th>
+                            <th>Spesifikasi</th>
+                            <th>Kuantitas</th>
+                            <th>Satuan</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in purchase_order.items.all %}
+                            <tr>
+                                <td>{{ item.item_name }}</td>
+                                <td>
+                                    {{ item.specification|default:"-" }}
+                                </td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.unit }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-secondary py-4">
+                                    Belum ada detail barang pada PO ini.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <div class="text-end">
+                    <div class="text-secondary small">Total Quotation</div>
+                    <div class="fs-5 fw-bold">
+                        Rp {{ purchase_order.vendor_selection.quotation.total_price|floatformat:2 }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if purchase_order.status == "DRAFT" %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                <div>
+                    <h2 class="h5 mb-1">Penerbitan Purchase Order</h2>
+                    <p class="text-secondary mb-0">
+                        Pastikan data vendor dan detail barang sudah benar sebelum menerbitkan PO.
+                    </p>
+                </div>
+
+                <form
+                    method="post"
+                    action="{% url 'requisitions:purchase_order_issue' purchase_order.pk %}"
+                    onsubmit="return confirm('Apakah kamu yakin ingin menerbitkan PO ini?');"
+                >
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success">
+                        Terbitkan PO
+                    </button>
+                </form>
+            </div>
+        </div>
+    {% elif purchase_order.status == "ISSUED" %}
+        <div class="alert alert-success mt-4">
+            PO ini sudah diterbitkan dan siap menjadi dasar proses penerimaan barang.
+        </div>
+    {% endif %}
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

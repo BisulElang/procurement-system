@@ -1,0 +1,122 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Goods Receipt - Daftar PO</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+</head>
+<body class="bg-light">
+<div class="container py-5">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3">Goods Receipt</h1>
+            <p class="text-secondary mb-0">
+                Pilih Purchase Order yang sudah diterbitkan untuk mencatat penerimaan barang.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'requisitions:purchase_order_list' %}"
+            class="btn btn-outline-secondary"
+        >
+            Kembali ke Daftar PO
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Tutup"
+                ></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nomor PO</th>
+                        <th>Nomor PR</th>
+                        <th>Vendor</th>
+                        <th>Tanggal PO</th>
+                        <th>Estimasi Pengiriman</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for po in purchase_orders %}
+                    <tr>
+                        <td class="fw-semibold text-nowrap">
+                            {{ po.po_number }}
+                        </td>
+
+                        <td class="text-nowrap">
+                            {{ po.vendor_selection.purchase_request.pr_number }}
+                        </td>
+
+                        <td>
+                            {{ po.vendor_selection.quotation.invitation.vendor.name }}
+                        </td>
+
+                        <td class="text-nowrap">
+                            {{ po.order_date|date:"d M Y" }}
+                        </td>
+
+                        <td class="text-nowrap">
+                            {% if po.expected_delivery_date %}
+                                {{ po.expected_delivery_date|date:"d M Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td class="text-nowrap">
+                            <a
+                                href="{% url 'requisitions:goods_receipt_create' po.pk %}"
+                                class="btn btn-primary btn-sm"
+                            >
+                                Catat Penerimaan
+                            </a>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <p class="text-secondary mb-3">
+                                Belum ada PO berstatus Diterbitkan yang dapat diproses.
+                            </p>
+                            <a
+                                href="{% url 'requisitions:purchase_order_list' %}"
+                                class="btn btn-outline-primary btn-sm"
+                            >
+                                Lihat Daftar PO
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

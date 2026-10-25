@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Detail Purchase Request</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+</head>
+<body class="bg-light">
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3">Detail Purchase Request</h1>
+            <p class="text-secondary mb-0">
+                Periksa informasi dan item yang diajukan.
+            </p>
+        </div>
+
+        <a
+            href="{% url 'requisitions:approval_list' %}"
+            class="btn btn-outline-secondary"
+        >
+            Kembali
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-3">Nomor PR</dt>
+                <dd class="col-sm-9">{{ purchase_request.pr_number }}</dd>
+
+                <dt class="col-sm-3">Judul</dt>
+                <dd class="col-sm-9">{{ purchase_request.title }}</dd>
+
+                <dt class="col-sm-3">Requester</dt>
+                <dd class="col-sm-9">
+                    {{ purchase_request.requester.username }}
+                </dd>
+
+                <dt class="col-sm-3">Deskripsi</dt>
+                <dd class="col-sm-9">
+                    {{ purchase_request.description|linebreaksbr }}
+                </dd>
+
+                <dt class="col-sm-3">Justifikasi</dt>
+                <dd class="col-sm-9">
+                    {{ purchase_request.justification|linebreaksbr }}
+                </dd>
+
+                <dt class="col-sm-3">Tanggal Kebutuhan</dt>
+                <dd class="col-sm-9">
+                    {{ purchase_request.needed_by|date:"d M Y" }}
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h2 class="h5 mb-0">Item yang Diajukan</h2>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nama Item</th>
+                        <th>Spesifikasi</th>
+                        <th>Jumlah</th>
+                        <th>Harga Estimasi</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in purchase_request.items.all %}
+                    <tr>
+                        <td>{{ item.item_name }}</td>
+                        <td>{{ item.specification|default:"-" }}</td>
+                        <td>{{ item.quantity }} {{ item.unit }}</td>
+                        <td>Rp {{ item.estimated_unit_price|floatformat:2 }}</td>
+                        <td>
+                            Rp {% widthratio item.quantity 1 item.estimated_unit_price %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            Belum ada item.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h2 class="h5 mb-0">Keputusan Approver</h2>
+        </div>
+
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Pilih keputusan
+                    </label>
+                    {{ form.decision }}
+                    {% for error in form.decision.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        {{ form.comments.label }}
+                    </label>
+                    {{ form.comments }}
+                    {% for error in form.comments.errors %}
+                    <div class="text-danger small">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    Simpan Keputusan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white">
+            <h2 class="h5 mb-0">Riwayat Persetujuan</h2>
+        </div>
+        <div class="card-body">
+            {% for history in histories %}
+                <div class="border-bottom pb-3 mb-3">
+                    <strong>{{ history.get_decision_display }}</strong>
+                    <div class="text-secondary small">
+                        {{ history.approver.username }} ·
+                        {{ history.created_at|date:"d M Y H:i" }}
+                    </div>
+                    <p class="mb-0 mt-2">
+                        {{ history.comments|linebreaksbr }}
+                    </p>
+                </div>
+            {% empty %}
+                <p class="text-secondary mb-0">
+                    Belum ada riwayat keputusan.
+                </p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+</body>
+</html>

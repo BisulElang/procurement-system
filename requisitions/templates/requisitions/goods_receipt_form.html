@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Catat Goods Receipt</title>
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet"
+    >
+</head>
+<body class="bg-light">
+<div class="container py-5">
+
+    <div class="mb-4">
+        <h1 class="h3">Catat Penerimaan Barang</h1>
+        <p class="text-secondary mb-0">
+            Catat jumlah dan kondisi barang yang benar-benar diterima.
+        </p>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Tutup"
+                ></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    {% if form.non_field_errors %}
+        <div class="alert alert-danger">
+            {{ form.non_field_errors }}
+        </div>
+    {% endif %}
+
+    {% for error in formset.non_form_errors %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endfor %}
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Informasi Purchase Order</h2>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-secondary small">Nomor PO</div>
+                    <div class="fw-semibold">{{ purchase_order.po_number }}</div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Nomor PR</div>
+                    <div class="fw-semibold">
+                        {{ purchase_order.vendor_selection.purchase_request.pr_number }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Vendor</div>
+                    <div class="fw-semibold">
+                        {{ purchase_order.vendor_selection.quotation.invitation.vendor.name }}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="text-secondary small">Tanggal PO</div>
+                    <div>{{ purchase_order.order_date|date:"d M Y" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h2 class="h5 mb-3">Ringkasan Kuantitas</h2>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Barang</th>
+                            <th>Dipesan</th>
+                            <th>Sudah Diterima</th>
+                            <th>Sisa</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for row in item_rows %}
+                        <tr>
+                            <td>{{ row.item.item_name }}</td>
+                            <td>{{ row.item.quantity }} {{ row.item.unit }}</td>
+                            <td>{{ row.received }} {{ row.item.unit }}</td>
+                            <td class="fw-semibold">
+                                {{ row.remaining }} {{ row.item.unit }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                <h2 class="h5 mb-3">Informasi Penerimaan</h2>
+
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">
+                            {{ field.label }}
+                        </label>
+
+                        {{ field }}
+
+                        {% for error in field.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <hr class="my-4">
+
+                <h2 class="h5 mb-3">Detail Barang yang Diterima</h2>
+
+                {{ formset.management_form }}
+
+                {% for item_form in formset %}
+                    {% with row=item_rows|slice:forloop.counter0|first %}
+                    <div class="border rounded p-3 mb-3 bg-white">
+                        {{ item_form.purchase_order_item_id }}
+
+                        <h3 class="h6">
+                            {% for po_item in purchase_order.items.all %}
+                                {% if po_item.pk == item_form.purchase_order_item_id.value %}
+                                    {{ po_item.item_name }}
+                                    <span class="text-secondary fw-normal">
+                                        (Dipesan {{ po_item.quantity }} {{ po_item.unit }})
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+                        </h3>
+
+                        {% for field in item_form %}
+                            {% if field.name != "purchase_order_item_id" %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">
+                                        {{ field.label }}
+                                    </label>
+
+                                    {{ field }}
+
+                                    {% for error in field.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endwith %}
+                {% endfor %}
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">
+                        Simpan Penerimaan
+                    </button>
+
+                    <a
+                        href="{% url 'requisitions:goods_receipt_po_list' %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        Batal
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
